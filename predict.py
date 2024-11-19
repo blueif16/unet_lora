@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
 
+from peft import PeftModel
 from utils.data_loading import BasicDataset
 from unet import UNet
 from utils.utils import plot_img_and_mask
@@ -16,11 +17,17 @@ def predict_img(net,
                 full_img,
                 device,
                 scale_factor=1,
-                out_threshold=0.5):
+                out_threshold=0.5,
+                lora = False,
+                peft_model_epoch = None):
     net.eval()
     img = torch.from_numpy(BasicDataset.preprocess(None, full_img, scale_factor, is_mask=False))
     img = img.unsqueeze(0)
     img = img.to(device=device, dtype=torch.float32)
+
+    if lora: 
+        peft_model_path = os.path.join("checkpoints_lora", f"checkpoint_epoch{str(peft_model_epoch)}")
+        net = PeftModel.from_pretrained(net, peft_model_path)
 
     with torch.no_grad():
         output = net(img).cpu()
@@ -48,6 +55,10 @@ def get_args():
                         help='Scale factor for the input images')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
     parser.add_argument('--classes', '-c', type=int, default=2, help='Number of classes')
+    parser.add_argument('--lora_epoch', '-e', type = int, default=1,
+                        help='Specify the lora adapator')
+    parser.add_argument('--use_lora', '-l', type = str, default=False,
+                        help='whether to use lora')
     
     return parser.parse_args()
 
@@ -67,7 +78,7 @@ def mask_to_image(mask: np.ndarray, mask_values):
     else:
         out = np.zeros((mask.shape[-2], mask.shape[-1]), dtype=np.uint8)
 
-    if mask.ndim == 3:
+    if mask.ndim == 3: 
         mask = np.argmax(mask, axis=0)
 
     for i, v in enumerate(mask_values):
@@ -104,7 +115,9 @@ if __name__ == '__main__':
                            full_img=img,
                            scale_factor=args.scale,
                            out_threshold=args.mask_threshold,
-                           device=device)
+                           device=device,
+                           lora = args.use_lora,
+                           peft_model_epoch = args.lora_epoch)
 
         if not args.no_save:
             out_filename = out_files[i]

@@ -1,0 +1,11 @@
+{
+    "train_method": "Using LoRA: True",
+    "current_period": "epoch: 2, 4 division step",
+    "period_time": 630.5732078552246,
+    "total_time": 2178.66361451149,
+    "updated_parameter count": 467176,
+    "learning rate": 1e-05,
+    "validation Dice": 0.10377361625432968,
+    "step": 1924,
+    "epoch": 2
+}

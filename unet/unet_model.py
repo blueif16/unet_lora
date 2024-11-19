@@ -1,6 +1,9 @@
 """ Full assembly of the parts to form the complete network """
 
 from .unet_parts import *
+# from peft import LoraConfig, get_peft_model
+import torch.nn as nn
+
 
 
 class UNet(nn.Module):
@@ -46,3 +49,4 @@ class UNet(nn.Module):
         self.up3 = torch.utils.checkpoint(self.up3)
         self.up4 = torch.utils.checkpoint(self.up4)
         self.outc = torch.utils.checkpoint(self.outc)
+
